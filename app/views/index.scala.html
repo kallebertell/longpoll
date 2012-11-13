@@ -1,0 +1,83 @@
+
+@main("Long polling chat") {
+    <input id="message" type="text">
+    <a id="sendMsg" href="#send">send message</a>
+
+    <h3>Log:</h3>
+    <pre id="message_log" style="background-color: #ddd"></pre>
+
+    <div id="connection_problem"></div>
+}
+
+<script type="text/javascript">
+
+(function() {
+    var lastSeqId = 0;
+
+    var startPolling = function() {
+        var poll = function () {
+            $.ajax('poll/'+lastSeqId, {
+                success: function(data) {
+                    hideConnectionProblem();
+                    printReceivedMessages(data.result);
+                    setTimeout(poll, 2000);
+                },
+
+                error: function(jqXHR, textStatus, errorThrown) {
+                    showConnectionProblem();
+                    setTimeout(poll, 4000);
+                }
+            });
+        }
+
+        poll();
+    }
+
+    var printReceivedMessages = function(messages) {
+        var items = [];
+
+        for(var i=0; len=messages.length, i<len; i++) {
+            var message = messages[i]
+            items.push(message.seqId + ': '+ message.msg);
+
+            if (message.seqId > lastSeqId) {
+                lastSeqId = message.seqId;
+            }
+        }
+
+        $('#message_log').append(items.join('\n') + '\n');
+    }
+
+    var showConnectionProblem = function() {
+        $('#connection_problem').attr("style", "display: block;").text("Connection failed at "+new Date().toTimeString());
+    }
+
+    var hideConnectionProblem = function() {
+        $('#connection_problem').attr("style", "display: hidden;")
+    }
+
+    var sendMessage = function(msg) {
+        $.ajax('sendmsg/'+msg, {
+            type: 'POST',
+            success: function(data) {
+                console.log("message sent");
+            },
+            error: function(jqXHR, textStatus, errorThrown) {
+                alert('Message sending failed: ' + errorThrown);
+            }
+        });
+    }
+
+    $(function() {
+        $('#sendMsg').click(function() {
+            var msgToSend = $('#message').val();
+            sendMessage(msgToSend);
+            return false;
+        });
+
+        startPolling();
+    })
+
+})();
+
+</script>
