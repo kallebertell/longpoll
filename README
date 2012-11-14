@@ -3,6 +3,8 @@ Long polling Play2 app
 
 Proof of concept.
 
-Messages will be pushed out maximum at a rate of once a second.
-After a 60 second period with no messages connections will timeout and client will re-connect again.
+Messages will be pushed out at a maximum rate of once per
+second. After a 60 second period with no messages, connections
+will timeout and the client will re-connect again.
+
 The long polling connections should not tie up threads in the application.
